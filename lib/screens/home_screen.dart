@@ -125,11 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.remove_red_eye, size: 28),
-            const SizedBox(width: 8),
-            const Text('VisionTry Store'),
+            SizedBox(width: 8),
+            Text('VisionTry Store'),
           ],
         ),
         actions: [
