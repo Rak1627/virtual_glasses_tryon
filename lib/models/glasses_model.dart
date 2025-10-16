@@ -14,46 +14,47 @@ class GlassesModel {
   });
 
   static List<GlassesModel> getSampleGlasses() {
+    // Using empty paths for now - glasses will be drawn programmatically
     return [
       GlassesModel(
         id: '1',
         name: 'Classic Wayfarer',
-        imagePath: 'assets/glasses/wayfarer.png',
+        imagePath: '',
         color: 'Black',
         price: 99.99,
       ),
       GlassesModel(
         id: '2',
         name: 'Round Vintage',
-        imagePath: 'assets/glasses/round.png',
+        imagePath: '',
         color: 'Gold',
         price: 89.99,
       ),
       GlassesModel(
         id: '3',
         name: 'Aviator',
-        imagePath: 'assets/glasses/aviator.png',
+        imagePath: '',
         color: 'Silver',
         price: 119.99,
       ),
       GlassesModel(
         id: '4',
         name: 'Cat Eye',
-        imagePath: 'assets/glasses/cateye.png',
+        imagePath: '',
         color: 'Tortoise',
         price: 94.99,
       ),
       GlassesModel(
         id: '5',
         name: 'Square Frame',
-        imagePath: 'assets/glasses/square.png',
+        imagePath: '',
         color: 'Blue',
         price: 79.99,
       ),
       GlassesModel(
         id: '6',
         name: 'Vinyl Clear',
-        imagePath: 'assets/glasses/vinyl.png',
+        imagePath: '',
         color: 'Clear Yellow',
         price: 85.99,
       ),
