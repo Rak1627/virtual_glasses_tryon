@@ -39,20 +39,31 @@ jobs:
 
     - name: Build APK (Release)
       run: |
-        echo "Starting APK build..."
-        flutter build apk --release --verbose --no-tree-shake-icons
-        echo "Build completed!"
-      continue-on-error: false
+        echo "========== Starting APK build =========="
+        flutter build apk --release --verbose --no-tree-shake-icons 2>&1 | tee build_log.txt
+        BUILD_EXIT_CODE=${PIPESTATUS[0]}
+        echo "Build exit code: $BUILD_EXIT_CODE"
+
+        echo "========== Checking build directory =========="
+        ls -R build/ || echo "Build directory not found"
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "Build failed with exit code $BUILD_EXIT_CODE"
+          cat build_log.txt
+          exit $BUILD_EXIT_CODE
+        fi
 
     - name: Verify APK exists
       run: |
-        echo "Checking for APK files..."
-        ls -lah build/app/outputs/flutter-apk/
-        if [ ! -f build/app/outputs/flutter-apk/app-release.apk ]; then
-          echo "ERROR: APK file not found!"
+        echo "========== Verifying APK =========="
+        find build -name "*.apk" -type f || echo "No APK files found anywhere"
+
+        if [ -d "build/app/outputs/flutter-apk/" ]; then
+          ls -lah build/app/outputs/flutter-apk/
+        else
+          echo "ERROR: flutter-apk directory does not exist!"
           exit 1
         fi
-        echo "APK file found successfully!"
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
