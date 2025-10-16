@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Glasses frame - left lens -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,45 Q30,35 40,35 L50,35 Q60,35 60,45 L60,55 Q60,65 50,65 L40,65 Q30,65 30,55 Z" />
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M30,45 Q30,35 40,35 L50,35 Q60,35 60,45 L60,55 Q60,65 50,65 L40,65 Q30,65 30,55 Z" />
+
+    <!-- Glasses frame - right lens -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,45 Q68,35 78,35 L88,35 Q98,35 98,45 L98,55 Q98,65 88,65 L78,65 Q68,65 68,55 Z" />
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M68,45 Q68,35 78,35 L88,35 Q98,35 98,45 L98,55 Q98,65 88,65 L78,65 Q68,65 68,55 Z" />
+
+    <!-- Bridge -->
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="3"
+        android:pathData="M60,50 L68,50" />
+
+    <!-- Left temple -->
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="3"
+        android:pathData="M30,50 L20,50" />
+
+    <!-- Right temple -->
+    <path
+        android:strokeColor="#6366F1"
+        android:strokeWidth="3"
+        android:pathData="M98,50 L108,50" />
+</vector>
