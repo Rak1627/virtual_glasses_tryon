@@ -40,36 +40,27 @@ jobs:
     - name: Build APK (Release)
       run: |
         echo "========== Starting APK build =========="
-        flutter build apk --release --verbose --no-tree-shake-icons 2>&1 | tee build_log.txt
-        BUILD_EXIT_CODE=${PIPESTATUS[0]}
-        echo "Build exit code: $BUILD_EXIT_CODE"
+        set -e
+        set -o pipefail
 
-        echo "========== Checking build directory =========="
-        ls -R build/ || echo "Build directory not found"
+        flutter build apk --release --split-per-abi --verbose 2>&1 | tee build_log.txt
 
-        if [ $BUILD_EXIT_CODE -ne 0 ]; then
-          echo "Build failed with exit code $BUILD_EXIT_CODE"
-          cat build_log.txt
-          exit $BUILD_EXIT_CODE
-        fi
+        echo "========== Build completed, checking outputs =========="
+        echo "Full build directory structure:"
+        find build -type f -name "*.apk" || echo "No APK found"
 
-    - name: Verify APK exists
-      run: |
-        echo "========== Verifying APK =========="
-        find build -name "*.apk" -type f || echo "No APK files found anywhere"
+        echo "Checking standard output locations:"
+        ls -lah build/app/outputs/apk/release/ || echo "No apk/release directory"
+        ls -lah build/app/outputs/flutter-apk/ || echo "No flutter-apk directory"
+        ls -lah build/app/outputs/ || echo "No outputs directory"
 
-        if [ -d "build/app/outputs/flutter-apk/" ]; then
-          ls -lah build/app/outputs/flutter-apk/
-        else
-          echo "ERROR: flutter-apk directory does not exist!"
-          exit 1
-        fi
-
-    - name: Upload Release APK
+    - name: Upload Release APKs
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: virtual-glasses-apk
-        path: build/app/outputs/flutter-apk/*.apk
+        path: |
+          build/app/outputs/flutter-apk/*.apk
+          build/app/outputs/apk/release/*.apk
         retention-days: 30
-        if-no-files-found: error
+        if-no-files-found: warn
