@@ -37,10 +37,16 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
 
+    - name: Check for Flutter errors
+      run: |
+        echo "========== Running Flutter analyze =========="
+        flutter analyze || true
+
     - name: Build APK (Release)
       run: |
         echo "========== Starting APK build =========="
-        flutter build apk --release
+        flutter build apk --release --verbose 2>&1 | tee build.log
+        exit ${PIPESTATUS[0]}
 
     - name: Find APK files
       run: |
