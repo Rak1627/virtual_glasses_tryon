@@ -40,19 +40,13 @@ jobs:
     - name: Build APK (Release)
       run: |
         echo "========== Starting APK build =========="
-        set -e
-        set -o pipefail
+        flutter build apk --release
 
-        flutter build apk --release --split-per-abi --verbose 2>&1 | tee build_log.txt
-
-        echo "========== Build completed, checking outputs =========="
-        echo "Full build directory structure:"
-        find build -type f -name "*.apk" || echo "No APK found"
-
-        echo "Checking standard output locations:"
-        ls -lah build/app/outputs/apk/release/ || echo "No apk/release directory"
-        ls -lah build/app/outputs/flutter-apk/ || echo "No flutter-apk directory"
-        ls -lah build/app/outputs/ || echo "No outputs directory"
+    - name: Find APK files
+      run: |
+        echo "========== Searching for APK files =========="
+        find . -name "*.apk" -type f
+        ls -R build/app/outputs/ || true
 
     - name: Upload Release APKs
       uses: actions/upload-artifact@v4
