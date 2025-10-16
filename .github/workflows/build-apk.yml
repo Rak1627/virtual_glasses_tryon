@@ -37,31 +37,18 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
 
-    - name: Analyze code
-      run: flutter analyze --no-fatal-infos || echo "Analysis has warnings, continuing..."
-      continue-on-error: true
-
-    - name: Build APK (Debug for testing)
-      run: flutter build apk --debug --verbose
-
-    - name: Build APK (Release)
-      run: flutter build apk --release --verbose
+    - name: Build APK (Release only)
+      run: flutter build apk --release --verbose --no-tree-shake-icons
+      continue-on-error: false
 
     - name: List build outputs
       run: ls -R build/app/outputs/
 
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v4
-      if: success()
-      with:
-        name: app-debug
-        path: build/app/outputs/flutter-apk/app-debug.apk
-        retention-days: 7
-
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
-      if: success()
+      if: always()
       with:
-        name: app-release
-        path: build/app/outputs/flutter-apk/app-release.apk
+        name: virtual-glasses-apk
+        path: build/app/outputs/flutter-apk/*.apk
         retention-days: 30
+        if-no-files-found: error
