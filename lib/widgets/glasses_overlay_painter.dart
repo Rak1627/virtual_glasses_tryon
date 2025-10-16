@@ -78,14 +78,19 @@ class GlassesOverlayPainter extends CustomPainter {
   }
 
   void _drawGlasses(Canvas canvas, double width, double height) {
+    // Determine style based on glassesImagePath
+    final isAviator = glassesImagePath?.contains('aviator') ?? false;
+    final isRound = glassesImagePath?.contains('round') ?? false;
+    final isCateye = glassesImagePath?.contains('cateye') ?? false;
+
     final Paint glassesPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..color = Colors.black87;
+      ..strokeWidth = 4.0
+      ..color = isAviator ? const Color(0xFFFFD700) : Colors.black87;
 
     final Paint lensPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.blue.withOpacity(0.1);
+      ..color = (isAviator ? Colors.amber : Colors.blue).withOpacity(0.15);
 
     // Left lens
     final leftLensRect = Rect.fromCenter(
@@ -93,29 +98,60 @@ class GlassesOverlayPainter extends CustomPainter {
       width: width * 0.35,
       height: height,
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(leftLensRect, const Radius.circular(8)),
-      lensPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(leftLensRect, const Radius.circular(8)),
-      glassesPaint,
-    );
 
-    // Right lens
+    if (isRound) {
+      // Circular lenses for round glasses
+      canvas.drawCircle(Offset(-width * 0.25, 0), width * 0.175, lensPaint);
+      canvas.drawCircle(Offset(-width * 0.25, 0), width * 0.175, glassesPaint);
+    } else if (isAviator) {
+      // Teardrop shape for aviators
+      final path = Path()
+        ..moveTo(-width * 0.42, -height * 0.2)
+        ..quadraticBezierTo(-width * 0.25, -height * 0.6, -width * 0.08, -height * 0.2)
+        ..quadraticBezierTo(-width * 0.08, height * 0.4, -width * 0.25, height * 0.5)
+        ..quadraticBezierTo(-width * 0.42, height * 0.4, -width * 0.42, -height * 0.2);
+      canvas.drawPath(path, lensPaint);
+      canvas.drawPath(path, glassesPaint);
+    } else {
+      // Standard rounded rectangle
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(leftLensRect, Radius.circular(isCateye ? 16 : 8)),
+        lensPaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(leftLensRect, Radius.circular(isCateye ? 16 : 8)),
+        glassesPaint,
+      );
+    }
+
+    // Right lens (mirror of left)
     final rightLensRect = Rect.fromCenter(
       center: Offset(width * 0.25, 0),
       width: width * 0.35,
       height: height,
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rightLensRect, const Radius.circular(8)),
-      lensPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rightLensRect, const Radius.circular(8)),
-      glassesPaint,
-    );
+
+    if (isRound) {
+      canvas.drawCircle(Offset(width * 0.25, 0), width * 0.175, lensPaint);
+      canvas.drawCircle(Offset(width * 0.25, 0), width * 0.175, glassesPaint);
+    } else if (isAviator) {
+      final path = Path()
+        ..moveTo(width * 0.42, -height * 0.2)
+        ..quadraticBezierTo(width * 0.25, -height * 0.6, width * 0.08, -height * 0.2)
+        ..quadraticBezierTo(width * 0.08, height * 0.4, width * 0.25, height * 0.5)
+        ..quadraticBezierTo(width * 0.42, height * 0.4, width * 0.42, -height * 0.2);
+      canvas.drawPath(path, lensPaint);
+      canvas.drawPath(path, glassesPaint);
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rightLensRect, Radius.circular(isCateye ? 16 : 8)),
+        lensPaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rightLensRect, Radius.circular(isCateye ? 16 : 8)),
+        glassesPaint,
+      );
+    }
 
     // Bridge
     canvas.drawLine(

@@ -125,7 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Virtual Glasses Try-On'),
+        title: Row(
+          children: [
+            Icon(Icons.remove_red_eye, size: 28),
+            const SizedBox(width: 8),
+            const Text('VisionTry Store'),
+          ],
+        ),
         actions: [
           Consumer<GlassesProvider>(
             builder: (context, provider, _) {
@@ -133,9 +139,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(
                   provider.showGlasses ? Icons.visibility : Icons.visibility_off,
                 ),
+                tooltip: provider.showGlasses ? 'Hide Glasses' : 'Show Glasses',
                 onPressed: () {
                   provider.toggleGlassesVisibility();
                 },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'About',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('VisionTry AR Glasses Store'),
+                  content: const Text(
+                    'Try on glasses virtually using AR technology!\n\n'
+                    '• Select glasses from catalog\n'
+                    '• See how they look on your face in real-time\n'
+                    '• Capture and share photos\n'
+                    '• Purchase your favorite pairs',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Got it'),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -243,10 +275,105 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.remove_red_eye),
-                      title: Text(provider.selectedGlasses!.name),
-                      subtitle: Text('${provider.selectedGlasses!.color} - \$${provider.selectedGlasses!.price}'),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.remove_red_eye, color: Color(0xFF6366F1)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      provider.selectedGlasses!.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      provider.selectedGlasses!.color,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '\$${provider.selectedGlasses!.price}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Color(0xFF6366F1),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('${provider.selectedGlasses!.name} added to cart!'),
+                                        backgroundColor: Colors.green,
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.shopping_cart),
+                                  label: const Text('Add to Cart'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Purchase Confirmation'),
+                                        content: Text('Buy ${provider.selectedGlasses!.name} for \$${provider.selectedGlasses!.price}?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Order placed successfully!'),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            },
+                                            child: const Text('Confirm'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.shopping_bag),
+                                  label: const Text('Buy Now'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
