@@ -74,17 +74,13 @@ class _CameraScreenState extends State<CameraScreen> {
 
   InputImage? _convertCameraImage(CameraImage image) {
     try {
-      final rotation = InputImageRotation.rotation0deg;
-      final format = InputImageFormatValue.from(image.format.raw);
-      if (format == null) return null;
-
       final plane = image.planes.first;
       return InputImage.fromBytes(
         bytes: plane.bytes,
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
-          rotation: rotation,
-          format: format,
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.nv21,
           bytesPerRow: plane.bytesPerRow,
         ),
       );
