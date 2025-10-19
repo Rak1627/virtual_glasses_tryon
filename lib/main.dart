@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:camera/camera.dart';
 import 'providers/glasses_provider_simple.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final cameras = await availableCameras();
+  runApp(MyApp(cameras: cameras));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final List<CameraDescription> cameras;
+  const MyApp({Key? key, required this.cameras}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,44 +20,57 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'VisionTry Store',
         theme: ThemeData(primarySwatch: Colors.indigo),
-        home: const HomeScreen(),
+        home: HomeScreen(cameras: cameras),
       ),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomeScreen extends StatefulWidget {
+  final List<CameraDescription> cameras;
+  const HomeScreen({Key? key, required this.cameras}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  CameraController? _controller;
+  bool _isCameraInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.cameras.isNotEmpty) {
+      _initCamera();
+    }
+  }
+
+  Future<void> _initCamera() async {
+    final camera = widget.cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.front,
+      orElse: () => widget.cameras.first,
+    );
+    _controller = CameraController(camera, ResolutionPreset.medium);
+    await _controller!.initialize();
+    if (mounted) {
+      setState(() => _isCameraInitialized = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('VisionTry Store')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.remove_red_eye, size: 100, color: Colors.indigo),
-            const SizedBox(height: 20),
-            Consumer<GlassesProvider>(
-              builder: (context, provider, _) {
-                return Text(
-                  'Selected: ${provider.selectedGlasses}',
-                  style: const TextStyle(fontSize: 20),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Provider.of<GlassesProvider>(context, listen: false)
-                    .selectGlasses('Ray-Ban Wayfarer');
-              },
-              child: const Text('Try Glasses'),
-            ),
-          ],
-        ),
-      ),
+      appBar: AppBar(title: const Text('VisionTry Store - Camera Test')),
+      body: _isCameraInitialized && _controller != null
+          ? CameraPreview(_controller!)
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
