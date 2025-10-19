@@ -74,17 +74,34 @@ class _CameraScreenState extends State<CameraScreen> {
 
   InputImage? _convertCameraImage(CameraImage image) {
     try {
+      // Get image format
+      InputImageFormat? format;
+      if (image.format.group == ImageFormatGroup.yuv420) {
+        format = InputImageFormat.yuv420;
+      } else if (image.format.group == ImageFormatGroup.nv21) {
+        format = InputImageFormat.nv21;
+      } else {
+        return null; // Unsupported format
+      }
+
+      // Get rotation (front camera is usually 270 or 90 degrees)
+      final rotation = InputImageRotation.rotation270deg;
+
       final plane = image.planes.first;
       return InputImage.fromBytes(
         bytes: plane.bytes,
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
-          rotation: InputImageRotation.rotation0deg,
-          format: InputImageFormat.nv21,
+          rotation: rotation,
+          format: format,
           bytesPerRow: plane.bytesPerRow,
         ),
       );
     } catch (e) {
+      // Debug: Print error in development
+      if (mounted) {
+        debugPrint('Face detection error: $e');
+      }
       return null;
     }
   }
@@ -155,14 +172,17 @@ class _CameraScreenState extends State<CameraScreen> {
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      _buildGlassButton(context, 'Wayfarer', '\$149.99'),
-                      _buildGlassButton(context, 'Aviator', '\$179.99'),
-                      _buildGlassButton(context, 'Round', '\$129.99'),
-                      _buildGlassButton(context, 'Cat Eye', '\$139.99'),
-                    ],
+                  SizedBox(
+                    height: 100,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildGlassCard(context, 'Wayfarer', '\$149.99', Colors.black87),
+                        _buildGlassCard(context, 'Aviator', '\$179.99', const Color(0xFFFFD700)),
+                        _buildGlassCard(context, 'Round', '\$129.99', const Color(0xFFFF6B9D)),
+                        _buildGlassCard(context, 'Cat Eye', '\$139.99', Colors.purple),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (provider.selectedGlasses != 'None')
@@ -224,18 +244,143 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Widget _buildGlassButton(BuildContext context, String name, String price) {
-    return ElevatedButton(
-      onPressed: () {
-        Provider.of<GlassesProvider>(context, listen: false).selectGlasses(name);
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(name),
-          Text(price, style: const TextStyle(fontSize: 12)),
-        ],
+  Widget _buildGlassCard(BuildContext context, String name, String price, Color color) {
+    final provider = Provider.of<GlassesProvider>(context, listen: false);
+    final isSelected = provider.selectedGlasses == name;
+
+    return GestureDetector(
+      onTap: () => provider.selectGlasses(name),
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.indigo.shade100 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.indigo : Colors.grey.shade300,
+            width: isSelected ? 3 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CustomPaint(
+              size: const Size(60, 25),
+              painter: _GlassesPreviewPainter(name, color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              name,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _GlassesPreviewPainter extends CustomPainter {
+  final String glassesType;
+  final Color color;
+
+  _GlassesPreviewPainter(this.glassesType, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final lensPaint = Paint()
+      ..color = color.withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2;
+
+    canvas.save();
+
+    if (glassesType.contains('Round')) {
+      final radius = w * 0.15;
+      canvas.drawCircle(Offset(cx - w * 0.25, cy), radius, lensPaint);
+      canvas.drawCircle(Offset(cx - w * 0.25, cy), radius, paint);
+      canvas.drawCircle(Offset(cx + w * 0.25, cy), radius, lensPaint);
+      canvas.drawCircle(Offset(cx + w * 0.25, cy), radius, paint);
+      canvas.drawLine(Offset(cx - w * 0.1, cy), Offset(cx + w * 0.1, cy), paint);
+    } else if (glassesType.contains('Aviator')) {
+      final path1 = Path()
+        ..moveTo(cx - w * 0.42, cy - h * 0.2)
+        ..quadraticBezierTo(cx - w * 0.25, cy - h * 0.6, cx - w * 0.08, cy - h * 0.2)
+        ..quadraticBezierTo(cx - w * 0.08, cy + h * 0.4, cx - w * 0.25, cy + h * 0.5)
+        ..quadraticBezierTo(cx - w * 0.42, cy + h * 0.4, cx - w * 0.42, cy - h * 0.2);
+
+      final path2 = Path()
+        ..moveTo(cx + w * 0.42, cy - h * 0.2)
+        ..quadraticBezierTo(cx + w * 0.25, cy - h * 0.6, cx + w * 0.08, cy - h * 0.2)
+        ..quadraticBezierTo(cx + w * 0.08, cy + h * 0.4, cx + w * 0.25, cy + h * 0.5)
+        ..quadraticBezierTo(cx + w * 0.42, cy + h * 0.4, cx + w * 0.42, cy - h * 0.2);
+
+      canvas.drawPath(path1, lensPaint);
+      canvas.drawPath(path1, paint);
+      canvas.drawPath(path2, lensPaint);
+      canvas.drawPath(path2, paint);
+      canvas.drawLine(Offset(cx - w * 0.075, cy - h * 0.1), Offset(cx + w * 0.075, cy - h * 0.1), paint);
+    } else if (glassesType.contains('Cat')) {
+      final leftLens = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx - w * 0.25, cy), width: w * 0.35, height: h * 0.8),
+        const Radius.circular(12),
+      );
+      final rightLens = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx + w * 0.25, cy), width: w * 0.35, height: h * 0.8),
+        const Radius.circular(12),
+      );
+      canvas.drawRRect(leftLens, lensPaint);
+      canvas.drawRRect(leftLens, paint);
+      canvas.drawRRect(rightLens, lensPaint);
+      canvas.drawRRect(rightLens, paint);
+      canvas.drawLine(Offset(cx - w * 0.075, cy), Offset(cx + w * 0.075, cy), paint);
+    } else {
+      // Wayfarer
+      final leftLens = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx - w * 0.25, cy), width: w * 0.35, height: h * 0.8),
+        const Radius.circular(6),
+      );
+      final rightLens = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx + w * 0.25, cy), width: w * 0.35, height: h * 0.8),
+        const Radius.circular(6),
+      );
+      canvas.drawRRect(leftLens, lensPaint);
+      canvas.drawRRect(leftLens, paint);
+      canvas.drawRRect(rightLens, lensPaint);
+      canvas.drawRRect(rightLens, paint);
+      canvas.drawLine(Offset(cx - w * 0.075, cy), Offset(cx + w * 0.075, cy), paint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_GlassesPreviewPainter oldDelegate) => false;
+}
 }
