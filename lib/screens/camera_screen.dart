@@ -383,4 +383,3 @@ class _GlassesPreviewPainter extends CustomPainter {
   @override
   bool shouldRepaint(_GlassesPreviewPainter oldDelegate) => false;
 }
-}
