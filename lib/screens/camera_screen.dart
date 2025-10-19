@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../providers/glasses_provider_simple.dart';
+import '../widgets/glasses_painter.dart';
 
 class CameraScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -15,6 +17,15 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
   bool _isReady = false;
   bool _isProcessing = false;
+  final FaceDetector _faceDetector = FaceDetector(
+    options: FaceDetectorOptions(
+      enableLandmarks: true,
+      enableContours: false,
+      enableClassification: false,
+    ),
+  );
+  List<Face> _faces = [];
+  Size? _imageSize;
 
   @override
   void initState() {
@@ -43,15 +54,49 @@ class _CameraScreenState extends State<CameraScreen> {
     if (_isProcessing) return;
     _isProcessing = true;
 
-    // Temporarily disabled - will enable after basic build works
-    // Face detection requires complex InputImage setup
+    try {
+      final inputImage = _convertCameraImage(image);
+      if (inputImage != null) {
+        final faces = await _faceDetector.processImage(inputImage);
+        if (mounted) {
+          setState(() {
+            _faces = faces;
+            _imageSize = Size(image.width.toDouble(), image.height.toDouble());
+          });
+        }
+      }
+    } catch (e) {
+      // Handle errors silently
+    }
 
     _isProcessing = false;
+  }
+
+  InputImage? _convertCameraImage(CameraImage image) {
+    try {
+      final rotation = InputImageRotation.rotation0deg;
+      final format = InputImageFormatValue.from(image.format.raw);
+      if (format == null) return null;
+
+      final plane = image.planes.first;
+      return InputImage.fromBytes(
+        bytes: plane.bytes,
+        metadata: InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: rotation,
+          format: format,
+          bytesPerRow: plane.bytesPerRow,
+        ),
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
   void dispose() {
     _controller?.dispose();
+    _faceDetector.close();
     super.dispose();
   }
 
@@ -74,6 +119,15 @@ class _CameraScreenState extends State<CameraScreen> {
                     fit: StackFit.expand,
                     children: [
                       CameraPreview(_controller!),
+                      if (_faces.isNotEmpty && _imageSize != null && provider.selectedGlasses != 'None')
+                        CustomPaint(
+                          painter: GlassesPainter(
+                            faces: _faces,
+                            imageSize: _imageSize!,
+                            screenSize: MediaQuery.of(context).size,
+                            glassesType: provider.selectedGlasses,
+                          ),
+                        ),
                       Positioned(
                         top: 10,
                         left: 10,
@@ -83,9 +137,9 @@ class _CameraScreenState extends State<CameraScreen> {
                             color: Colors.black54,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'Camera Ready',
-                            style: TextStyle(color: Colors.white),
+                          child: Text(
+                            _faces.isEmpty ? 'No face detected' : '${_faces.length} face(s) detected',
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ),
