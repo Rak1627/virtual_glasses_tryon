@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:camera/camera.dart';
 import 'providers/glasses_provider_simple.dart';
+import 'services/face_detector_simple.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
+  final _faceDetector = SimpleFaceDetector();
 
   @override
   void initState() {
@@ -61,13 +63,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _controller?.dispose();
+    _faceDetector.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('VisionTry Store - Camera Test')),
+      appBar: AppBar(title: const Text('VisionTry - ML Kit Test')),
       body: _isCameraInitialized && _controller != null
           ? CameraPreview(_controller!)
           : const Center(child: CircularProgressIndicator()),
