@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'screens/home_screen.dart';
-import 'providers/glasses_provider.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -13,23 +9,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => GlassesProvider(),
-      child: MaterialApp(
-        title: 'Virtual Glasses Try-On',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
+    return MaterialApp(
+      title: 'VisionTry Store',
+      theme: ThemeData(primarySwatch: Colors.indigo),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('VisionTry Store')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.remove_red_eye, size: 100, color: Colors.indigo),
+              SizedBox(height: 20),
+              Text('Virtual Glasses Try-On', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              Text('Professional E-Commerce App'),
+            ],
           ),
         ),
-        home: const HomeScreen(),
       ),
     );
   }
