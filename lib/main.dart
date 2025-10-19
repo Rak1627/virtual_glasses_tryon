@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:camera/camera.dart';
 import 'providers/glasses_provider_simple.dart';
-import 'services/face_detector_simple.dart';
+import 'screens/camera_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,60 +20,13 @@ class MyApp extends StatelessWidget {
       create: (_) => GlassesProvider(),
       child: MaterialApp(
         title: 'VisionTry Store',
-        theme: ThemeData(primarySwatch: Colors.indigo),
-        home: HomeScreen(cameras: cameras),
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.indigo,
+          useMaterial3: true,
+        ),
+        home: CameraScreen(cameras: cameras),
       ),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  final List<CameraDescription> cameras;
-  const HomeScreen({Key? key, required this.cameras}) : super(key: key);
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  CameraController? _controller;
-  bool _isCameraInitialized = false;
-  final _faceDetector = SimpleFaceDetector();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.cameras.isNotEmpty) {
-      _initCamera();
-    }
-  }
-
-  Future<void> _initCamera() async {
-    final camera = widget.cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.front,
-      orElse: () => widget.cameras.first,
-    );
-    _controller = CameraController(camera, ResolutionPreset.medium);
-    await _controller!.initialize();
-    if (mounted) {
-      setState(() => _isCameraInitialized = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    _faceDetector.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('VisionTry - ML Kit Test')),
-      body: _isCameraInitialized && _controller != null
-          ? CameraPreview(_controller!)
-          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
