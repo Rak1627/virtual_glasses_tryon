@@ -24,29 +24,15 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.0'
+        flutter-version: '3.19.0'
         channel: 'stable'
         cache: true
-
-    - name: Flutter Doctor
-      run: flutter doctor -v
-
-    - name: Clean Flutter
-      run: flutter clean
 
     - name: Get dependencies
       run: flutter pub get
 
-    - name: Check for Flutter errors
-      run: |
-        echo "========== Running Flutter analyze =========="
-        flutter analyze || true
-
     - name: Build APK (Release)
-      run: |
-        echo "========== Starting APK build =========="
-        flutter build apk --release --verbose 2>&1 | tee build.log
-        exit ${PIPESTATUS[0]}
+      run: flutter build apk --release
 
     - name: Find APK files
       run: |
