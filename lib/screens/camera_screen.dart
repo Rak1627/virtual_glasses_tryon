@@ -78,22 +78,14 @@ class _CameraScreenState extends State<CameraScreen> {
       }
       final bytes = allBytes.done().buffer.asUint8List();
 
-      final planeData = image.planes.map((plane) {
-        return InputImagePlaneMetadata(
-          bytesPerRow: plane.bytesPerRow,
-          height: plane.height,
-          width: plane.width,
-        );
-      }).toList();
-
-      final inputImageData = InputImageData(
+      final metadata = InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
-        imageRotation: InputImageRotation.rotation0deg,
-        inputImageFormat: InputImageFormat.nv21,
-        planeData: planeData,
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.nv21,
+        bytesPerRow: image.planes[0].bytesPerRow,
       );
 
-      return InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
+      return InputImage.fromBytes(bytes: bytes, metadata: metadata);
     } catch (e) {
       return null;
     }
