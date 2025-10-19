@@ -52,34 +52,50 @@ class _CameraScreenState extends State<CameraScreen> {
     _isProcessing = true;
 
     try {
-      final WriteBuffer buffer = WriteBuffer();
-      for (final plane in image.planes) {
-        buffer.putUint8List(plane.bytes);
-      }
-      final bytes = buffer.done().buffer.asUint8List();
-
-      final inputImage = InputImage.fromBytes(
-        bytes: bytes,
-        metadata: InputImageMetadata(
-          size: Size(image.width.toDouble(), image.height.toDouble()),
-          rotation: InputImageRotation.rotation0deg,
-          format: InputImageFormat.nv21,
-          bytesPerRow: image.planes[0].bytesPerRow,
-        ),
-      );
-
-      final faces = await _faceDetector.processImage(inputImage);
-      if (mounted) {
-        setState(() {
-          _faces = faces;
-          _imageSize = Size(image.width.toDouble(), image.height.toDouble());
-        });
+      final inputImage = _buildInputImage(image);
+      if (inputImage != null) {
+        final faces = await _faceDetector.processImage(inputImage);
+        if (mounted) {
+          setState(() {
+            _faces = faces;
+            _imageSize = Size(image.width.toDouble(), image.height.toDouble());
+          });
+        }
       }
     } catch (e) {
-      // Ignore errors
+      // Silently handle errors
     }
 
     _isProcessing = false;
+  }
+
+  InputImage? _buildInputImage(CameraImage image) {
+    try {
+      final WriteBuffer allBytes = WriteBuffer();
+      for (final Plane plane in image.planes) {
+        allBytes.putUint8List(plane.bytes);
+      }
+      final bytes = allBytes.done().buffer.asUint8List();
+
+      final planeData = image.planes.map((plane) {
+        return InputImagePlaneMetadata(
+          bytesPerRow: plane.bytesPerRow,
+          height: plane.height,
+          width: plane.width,
+        );
+      }).toList();
+
+      final inputImageData = InputImageData(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        imageRotation: InputImageRotation.rotation0deg,
+        inputImageFormat: InputImageFormat.nv21,
+        planeData: planeData,
+      );
+
+      return InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
