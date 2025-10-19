@@ -5,6 +5,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../providers/glasses_provider_simple.dart';
 import '../widgets/glasses_painter.dart';
 import 'dart:async';
+import 'dart:typed_data';
 
 class CameraScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
