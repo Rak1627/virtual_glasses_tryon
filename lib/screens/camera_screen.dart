@@ -3,6 +3,8 @@ import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../providers/glasses_provider_simple.dart';
+import '../widgets/glasses_painter.dart';
+import 'dart:async';
 
 class CameraScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -18,6 +20,9 @@ class _CameraScreenState extends State<CameraScreen> {
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableLandmarks: true),
   );
+  List<Face> _faces = [];
+  bool _isProcessing = false;
+  Size? _imageSize;
 
   @override
   void initState() {
@@ -38,7 +43,43 @@ class _CameraScreenState extends State<CameraScreen> {
 
     if (mounted) {
       setState(() => _isReady = true);
+      _controller!.startImageStream(_processCameraImage);
     }
+  }
+
+  Future<void> _processCameraImage(CameraImage image) async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      final WriteBuffer buffer = WriteBuffer();
+      for (final plane in image.planes) {
+        buffer.putUint8List(plane.bytes);
+      }
+      final bytes = buffer.done().buffer.asUint8List();
+
+      final inputImage = InputImage.fromBytes(
+        bytes: bytes,
+        metadata: InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.nv21,
+          bytesPerRow: image.planes[0].bytesPerRow,
+        ),
+      );
+
+      final faces = await _faceDetector.processImage(inputImage);
+      if (mounted) {
+        setState(() {
+          _faces = faces;
+          _imageSize = Size(image.width.toDouble(), image.height.toDouble());
+        });
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+
+    _isProcessing = false;
   }
 
   @override
@@ -63,7 +104,36 @@ class _CameraScreenState extends State<CameraScreen> {
           Expanded(
             flex: 2,
             child: _isReady && _controller != null
-                ? CameraPreview(_controller!)
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CameraPreview(_controller!),
+                      if (_faces.isNotEmpty && _imageSize != null && provider.selectedGlasses != 'None')
+                        CustomPaint(
+                          painter: GlassesPainter(
+                            faces: _faces,
+                            imageSize: _imageSize!,
+                            screenSize: MediaQuery.of(context).size,
+                            glassesType: provider.selectedGlasses,
+                          ),
+                        ),
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _faces.isEmpty ? 'No face detected' : '${_faces.length} face(s)',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                 : const Center(child: CircularProgressIndicator()),
           ),
           Expanded(
